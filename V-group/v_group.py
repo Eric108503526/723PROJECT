@@ -9,21 +9,27 @@ DIRECTIONS = ["N", "E", "S", "W"]
 # ================================
 # MAP DEFINITION
 # ================================
-NODES = ["A", "B", "C", "D"]
-CLOCKWISE_DIR = {
-    "A": "N",  # A -> B
+#   A----D
+#   |    |
+#   B----C
+
+# NODES defines the circular topology in clockwise order
+NODES = ["A", "D", "C", "B"]
+
+COUNTERCLOCKWISE_DIR = {
+    "A": "S",  # A -> B
     "B": "E",  # B -> C
-    "C": "S",  # C -> D
+    "C": "N",  # C -> D
     "D": "W",  # D -> A
 }
-COUNTERCLOCKWISE_DIR = {
-    "A": "W",  # A -> D
-    "D": "S",  # D -> C
-    "C": "E",  # C -> B
+CLOCKWISE_DIR = {
+    "A": "E",  # A -> D
     "B": "N",  # B -> A
+    "C": "W",  # C -> B
+    "D": "S",  # D -> C
 }
 
-def get_direction(current_node, next_node):
+def get_direction(current_node, next_node) -> str:
     """
     Return the first driving direction from current_node toward next_node.
     This simplified model assumes the vehicle moves along the outer ring.
@@ -47,13 +53,13 @@ def get_direction(current_node, next_node):
 # VEHICLE MODEL
 # ================================
 class Vehicle:
-    def __init__(self, vid, start, start_slot=0):
+    def __init__(self, vid, start="A", start_slot=0):
         self.vehicle_id = vid
 
         # Randomize intermediate nodes for more dynamic routes
         nodes = ["B", "C", "D"]
         random.shuffle(nodes)
-        # Route: start -> random nodes -> start (loop)
+        # Route: A -> random nodes -> A
         self.route = ["A"] + nodes + ["A"]
 
         self.route_idx = self.route.index(start)
@@ -97,7 +103,7 @@ class Vehicle:
         # Update lane after moving to next segment
         self.lane = f"{self.current_node}_to_I1"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
         Convert vehicle state to dictionary format (Phase B protocol).
         """
@@ -113,7 +119,7 @@ class Vehicle:
 # ================================
 # MOCK SIGNAL CONTROLLER (Phase A)
 # ================================
-def mock_signal(t):
+def mock_signal(t) -> dict:
     """
     Generate a simple round-robin traffic signal.
     This simulates the i-group behavior in Phase A.
@@ -125,7 +131,7 @@ def mock_signal(t):
 # ================================
 # HELPER FUNCTIONS
 # ================================
-def front_blocked(v, vehicles):
+def front_blocked(v, vehicles) -> bool:
     """
     Check if there is a vehicle directly in front (same lane, next slot).
     """
@@ -136,7 +142,7 @@ def front_blocked(v, vehicles):
     return False
 
 
-def congestion_level(v, vehicles):
+def congestion_level(v, vehicles) -> int:
     """
     Count how many vehicles are ahead in the same lane.
     Used as a simple congestion metric.
@@ -213,7 +219,7 @@ def move(v):
 # ================================
 # SAFETY CHECKS
 # ================================
-def check_collision(vehicles):
+def check_collision(vehicles) -> int:
     """
     Detect collisions: more than one vehicle occupying the same lane/slot.
     """
@@ -232,14 +238,14 @@ def check_collision(vehicles):
     return collisions
 
 
-def check_illegal_direction(v):
+def check_illegal_direction(v) -> bool:
     """
     Check if vehicle direction is invalid.
     """
     return v.direction not in DIRECTIONS
 
 
-def check_uturn(v):
+def check_uturn(v) -> bool:
     """
     Placeholder for U-turn detection (not implemented in Phase A).
     """
@@ -249,7 +255,7 @@ def check_uturn(v):
 # ================================
 # MAIN SIMULATION STEP
 # ================================
-def step(vehicles, signal):
+def step(vehicles, signal) -> list:
     """
     Perform one simulation step:
     1. Decide actions
